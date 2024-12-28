@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>J Browser</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="browser-container">
+        <!-- Top Navigation Bar -->
+        <div class="browser-bar">
+            <div class="logo">J</div>
+            <button onclick="goBack()">Back</button>
+            <button onclick="goForward()">Forward</button>
+            <input id="url" type="text" placeholder="Enter URL here..."/>
+            <button onclick="navigate()">Navigate</button>
+        </div>
+        
+        <!-- Embedded Browser -->
+        <iframe class="browser" src="./search-engine.html" width="100%" height="500px" /></iframe>
+    </div>
+    
+    <script>
+        const iframe = document.getElementById('browser');
+        const input = document.getElementById('url');
+
+        // Function to set the input field's value to the current URL
+        function setInputValueToCurrentURL() {
+            const iframe = document.getElementById('browser');
+            const currentURL = iframe.src;
+            const urlInput = document.getElementById('url')
+            urlInput.value = currentURL;
+        }
+
+        // Call the function when the page loads:
+        window.onload = setInputValueToCurrentURL;
+        
+        function navigate() {
+            const url = input.value;
+            iframe.src = url.startsWith('http') ? url : `https://${url}`;
+        }
+
+        function goBack() {
+            iframe.contentWindow.history.back();
+        }
+
+        function goForward() {
+            iframe.contentWindow.history.forward();
+        }
+    </script>
+</body>
+</html>
