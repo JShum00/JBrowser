@@ -7,47 +7,168 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="browser-container">
-        <!-- Top Navigation Bar -->
-        <div class="browser-bar">
-            <div class="logo">J</div>
-            <button onclick="goBack()">Back</button>
-            <button onclick="goForward()">Forward</button>
-            <input id="url" type="text" placeholder="Enter URL here..."/>
-            <button onclick="navigate()">Navigate</button>
-        </div>
-        
-        <!-- Embedded Browser -->
-        <iframe class="browser" src="./search-engine.html" width="100%" height="500px" /></iframe>
-    </div>
-    
+    <main class="app-shell">
+        <section class="browser-container" aria-label="JBrowser cyberpunk browser shell">
+            <div class="window-chrome">
+                <div class="traffic-lights" aria-hidden="true">
+                    <span class="traffic-light red"></span>
+                    <span class="traffic-light yellow"></span>
+                    <span class="traffic-light green"></span>
+                </div>
+                <div class="brand-lockup">
+                    <div class="logo">J</div>
+                    <div>
+                        <p class="eyebrow">Neon Inception Engine</p>
+                        <h1>JBrowser</h1>
+                    </div>
+                </div>
+                <div class="system-readout" aria-label="Decorative system status">
+                    <span>depth: <strong id="depth-counter">01</strong></span>
+                    <span>signal: <strong>hot</strong></span>
+                </div>
+            </div>
+
+            <nav class="tab-strip" aria-label="Fake browser tabs">
+                <button class="tab active" type="button" data-url="./search-engine.html" data-title="JSearch">
+                    <span class="tab-status"></span>
+                    JSearch
+                    <span class="tab-close" aria-hidden="true">×</span>
+                </button>
+                <button class="tab" type="button" data-url="about:blank" data-title="Neon Blank">
+                    <span class="tab-status"></span>
+                    Neon Blank
+                    <span class="tab-close" aria-hidden="true">×</span>
+                </button>
+                <button class="tab" type="button" data-url="./index.html" data-title="Inception">
+                    <span class="tab-status"></span>
+                    Inception
+                    <span class="tab-close" aria-hidden="true">×</span>
+                </button>
+                <button class="new-tab" type="button" aria-label="Open a fake new tab">+</button>
+            </nav>
+
+            <div class="browser-bar">
+                <button type="button" onclick="goBack()" aria-label="Go back">←</button>
+                <button type="button" onclick="goForward()" aria-label="Go forward">→</button>
+                <button type="button" onclick="goHome()" aria-label="Go home">⌂</button>
+                <label class="url-wrap" for="url">
+                    <span class="protocol-chip">https://</span>
+                    <input id="url" type="text" placeholder="Enter a URL or summon another browser..." autocomplete="off" />
+                </label>
+                <button type="button" onclick="navigate()">Launch</button>
+            </div>
+
+            <div class="browser-stage">
+                <div class="scanline" aria-hidden="true"></div>
+                <iframe id="browser" class="browser" title="JBrowser viewport" src="./search-engine.html"></iframe>
+            </div>
+
+            <footer class="status-bar" aria-live="polite">
+                <span id="status-text">Ready. Some real sites block iframe loading; the illusion is part of the bit.</span>
+                <span class="status-pill">CYBERDECK ONLINE</span>
+            </footer>
+        </section>
+    </main>
+
     <script>
         const iframe = document.getElementById('browser');
         const input = document.getElementById('url');
+        const statusText = document.getElementById('status-text');
+        const tabs = Array.from(document.querySelectorAll('.tab'));
+        const depthCounter = document.getElementById('depth-counter');
+        let activeTab = tabs[0];
+        let customTabCount = 0;
 
-        // Function to set the input field's value to the current URL
-        function setInputValueToCurrentURL() {
-            const iframe = document.getElementById('browser');
-            const currentURL = iframe.src;
-            const urlInput = document.getElementById('url')
-            urlInput.value = currentURL;
+        function normalizeUrl(rawValue) {
+            const value = rawValue.trim();
+
+            if (!value) {
+                return './search-engine.html';
+            }
+
+            if (value.startsWith('./') || value.startsWith('/') || value.startsWith('about:')) {
+                return value;
+            }
+
+            return /^https?:\/\//i.test(value) ? value : `https://${value}`;
         }
 
-        // Call the function when the page loads:
-        window.onload = setInputValueToCurrentURL;
-        
+        function updateStatus(message) {
+            statusText.textContent = message;
+        }
+
+        function setInputValueToCurrentURL() {
+            input.value = iframe.getAttribute('src') || iframe.src;
+        }
+
+        function setActiveTab(tab) {
+            tabs.forEach((item) => item.classList.remove('active'));
+            tab.classList.add('active');
+            activeTab = tab;
+            iframe.src = tab.dataset.url;
+            input.value = tab.dataset.url;
+            updateStatus(`${tab.dataset.title} loaded in the neon frame.`);
+        }
+
+        function updateActiveTab(url) {
+            activeTab.dataset.url = url;
+            input.value = url;
+            updateStatus(`Launching ${url}. If it refuses to appear, blame iframe security headers.`);
+        }
+
         function navigate() {
-            const url = input.value;
-            iframe.src = url.startsWith('http') ? url : `https://${url}`;
+            const url = normalizeUrl(input.value);
+            iframe.src = url;
+            updateActiveTab(url);
+        }
+
+        function goHome() {
+            iframe.src = './search-engine.html';
+            updateActiveTab('./search-engine.html');
         }
 
         function goBack() {
             iframe.contentWindow.history.back();
+            updateStatus('Back signal sent to the inner browser.');
         }
 
         function goForward() {
             iframe.contentWindow.history.forward();
+            updateStatus('Forward signal sent to the inner browser.');
         }
+
+        function addFakeTab() {
+            customTabCount += 1;
+            const tab = document.createElement('button');
+            tab.className = 'tab';
+            tab.type = 'button';
+            tab.dataset.url = './search-engine.html';
+            tab.dataset.title = `Ghost Tab ${customTabCount}`;
+            tab.innerHTML = '<span class="tab-status"></span>Ghost Tab <span class="tab-close" aria-hidden="true">×</span>';
+            tab.addEventListener('click', () => setActiveTab(tab));
+            document.querySelector('.tab-strip').insertBefore(tab, document.querySelector('.new-tab'));
+            tabs.push(tab);
+            setActiveTab(tab);
+        }
+
+        tabs.forEach((tab) => {
+            tab.addEventListener('click', () => setActiveTab(tab));
+        });
+
+        document.querySelector('.new-tab').addEventListener('click', addFakeTab);
+
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                navigate();
+            }
+        });
+
+        iframe.addEventListener('load', () => {
+            setInputValueToCurrentURL();
+            depthCounter.textContent = iframe.src.endsWith('/index.html') || iframe.src.includes('index.html') ? '02' : '01';
+        });
+
+        window.addEventListener('load', setInputValueToCurrentURL);
     </script>
 </body>
 </html>
